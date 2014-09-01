@@ -25,10 +25,10 @@
   (let* ((current-player (if (eq 'X team) x-player o-player))
 	 (player-move (funcall current-player board team))
 	 (new-board (place-piece board player-move team)))
-    (if (cats-game? new-board)
-	(list 'E new-board)
-      (if (check-victory new-board team)
-	  (list team new-board)
+    (if (check-victory new-board team)
+	(list team new-board)
+      (if (cats-game? new-board)
+	  (list 'E new-board)
 	(play-game new-board (other-team team) x-player o-player)))))
 
 ;; Command line GUI for player
