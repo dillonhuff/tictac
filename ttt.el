@@ -269,16 +269,16 @@
   (reduce #'+ (map 'list (lambda (res) (game-score team res)) results)))
 
 (defun x-results (player opponents)
-  (map 'list (lambda (opp) (car (play-game (new-board) 'X player (eval (wrap-in-rand-move-lambda opp))))) opponents))
+  (map 'list (lambda (opp) (car (play-game (new-board) 'X player opp))) opponents))
 
 (defun o-results (player opponents)
-  (map 'list (lambda (opp) (car (play-game (new-board) 'X (eval (wrap-in-rand-move-lambda opp)) player))) opponents))
+  (map 'list (lambda (opp) (car (play-game (new-board) 'X opp player))) opponents))
 
-(defun tournament-eval (population code num-x-games num-o-games)
+(defun tournament-eval (population player num-x-games num-o-games)
   (let ((x-opponents (n-of num-x-games population))
-	 (o-opponents (n-of num-o-games population))
-	 (player (eval (wrap-in-rand-move-lambda code))))
+	 (o-opponents (n-of num-o-games population)))
     (+ (team-score 'X (x-results player x-opponents)) (team-score 'O (o-results player o-opponents)))))
 
 (defun tournament (population num-x-games num-o-games)
-  (map 'list (lambda (code) (tournament-eval population code num-x-games num-o-games)) population))
+  (let ((players (map 'list (lambda (code) (eval (wrap-in-rand-move-lambda code))) population)))
+    (map 'list (lambda (player) (tournament-eval players player num-x-games num-o-games)) players)))
