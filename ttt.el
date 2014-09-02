@@ -184,7 +184,7 @@
 	(T (type-signature a))))
 
 (defun type-signature (comp-expr)
-  (cadr (assoc comp-expr *func-types*)))
+  (cdr (assoc comp-expr *func-types*)))
 
 (defun compound-type (expr)
   (let* ((type-sig (type-signature (car expr)))
@@ -317,3 +317,26 @@
   (let* ((normed-totals (make-scaled-vals scores))
 	(max (car (last normed-totals))))
     (rec-sample-indexes-by-scores num-samples normed-totals max)))
+
+;; Simple driver program
+(defun reproduce-by-crossover (sol-nums pop)
+  (if (null sol-nums)
+      nil
+    (let* ((mother (nth (car sol-nums) pop))
+	   (father (nth (cadr sol-nums) pop))
+	   (offspring (crossover mother father)))
+      (cons (car offspring) (cons (cadr offspring) (reproduce-by-crossover (cddr sol-nums) pop))))))
+
+(defun test-fitness-and-reproduce (pop)
+  (let* ((scores (tournament pop 100 100))
+	 (reproducing-solution-nums (sample-indexes-by-scores (length pop) scores)))
+    (reproduce-by-crossover reproducing-solution-nums pop)))
+	 
+(defun rec-run-gp (population num-iters-left)
+  (if (= 0 num-iters-left)
+      population
+    (rec-run-gp (test-fitness-and-reproduce population) (- num-iters-left 1))))
+
+(defun run-gp (pop-size num-iters)
+  (let ((init-pop (new-population pop-size #'rand-if)))
+    (rec-run-gp init-pop num-iters)))
