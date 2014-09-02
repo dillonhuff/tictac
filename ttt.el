@@ -5,6 +5,11 @@
 (defun one-of (set)
   (random-elt set))
 
+(defun n-of (size set)
+  (if (= 0 size)
+      nil
+    (cons (one-of set) (n-of (- size 1) set))))
+
 (defun one-of-with-index (set)
   (let ((rand-ind (random (length set))))
     (cons (elt set rand-ind) (cons rand-ind nil))))
@@ -247,3 +252,33 @@
   (let ((mother-child (swap-point mother-path mother father-point))
 	(father-child (swap-point father-path father mother-point)))
     (cons mother-child (cons father-child nil))))
+
+;; Population generation
+(defun new-population (pop-size generating-func)
+  (if (= 0 pop-size)
+      nil
+    (cons (funcall generating-func) (new-population (- pop-size 1) generating-func))))
+
+;; Population fitness evaluation
+(defun game-score (team result)
+  (cond ((eq result team) 1)
+	((eq result 'E) 0)
+	(T -1)))
+
+(defun team-score (team results)
+  (reduce #'+ (map 'list (lambda (res) (game-score team res)) results)))
+
+(defun x-results (player opponents)
+  (map 'list (lambda (opp) (car (play-game (new-board) 'X player (eval (wrap-in-rand-move-lambda opp))))) opponents))
+
+(defun o-results (player opponents)
+  (map 'list (lambda (opp) (car (play-game (new-board) 'X (eval (wrap-in-rand-move-lambda opp)) player))) opponents))
+
+(defun tournament-eval (population code num-x-games num-o-games)
+  (let ((x-opponents (n-of num-x-games population))
+	 (o-opponents (n-of num-o-games population))
+	 (player (eval (wrap-in-rand-move-lambda code))))
+    (+ (team-score 'X (x-results player x-opponents)) (team-score 'O (o-results player o-opponents)))))
+
+(defun tournament (population num-x-games num-o-games)
+  (map 'list (lambda (code) (tournament-eval population code num-x-games num-o-games)) population))
