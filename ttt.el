@@ -282,3 +282,38 @@
 (defun tournament (population num-x-games num-o-games)
   (let ((players (map 'list (lambda (code) (eval (wrap-in-rand-move-lambda code))) population)))
     (map 'list (lambda (player) (tournament-eval players player num-x-games num-o-games)) players)))
+
+;; Sampling from population once fitness estimates are done
+(defun add-scale-scores (scores)
+  (let ((scale (+ (abs (apply #'min scores)) 1)))
+    (map 'list (lambda (score) (+ score scale)) scores)))
+
+(defun rec-total-scores (total scores)
+  (if (null scores)
+      nil
+    (cons (+ total (car scores)) (rec-total-scores (+ total (car scores)) (cdr scores)))))
+
+(defun total-scores (scores)
+  (rec-total-scores 0 scores))
+
+(defun make-scaled-vals (scores)
+  (let ((add-scaled (add-scale-scores scores)))
+    (total-scores add-scaled)))
+
+(defun rec-sample (cur-index total vals)
+  (if (< total (car vals))
+      cur-index
+    (rec-sample (+ cur-index 1) total (cdr vals))))
+
+(defun sample-index (vals max)
+  (rec-sample 0 (random max) vals))
+
+(defun rec-sample-indexes-by-scores (num-samples normed-scores max)
+  (if (= 0 num-samples)
+      nil
+    (cons (sample-index normed-scores max) (rec-sample-indexes-by-scores (- num-samples 1) normed-scores max))))
+
+(defun sample-indexes-by-scores (num-samples scores)
+  (let* ((normed-totals (make-scaled-vals scores))
+	(max (car (last normed-totals))))
+    (rec-sample-indexes-by-scores num-samples normed-totals max)))
